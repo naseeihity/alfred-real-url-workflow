@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/astaxie/beego/httplib"
 	"github.com/bitly/go-simplejson"
 )
 
-const ()
+//RoomInfo url and title
+type RoomInfo struct {
+	URL   string
+	Title string
+}
 
 // GetRid get real room id
 func getRid(rid string) (bool, string, string) {
@@ -75,44 +81,58 @@ func getRoomName(uid int) string {
 	return title
 }
 
-// GetBilibiliURL get real url of bilibili
-func GetBilibiliURL(rid string) (string, string) {
+// GetOneBilibiliURL get real url of bilibili
+func GetOneBilibiliURL(rid string) RoomInfo {
 	const roomURL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=%s&play_url=1&mask=1&qn=0&platform=web"
 	var realURL = ""
 	status, id, title := getRid(rid)
 
+	var roomInfo RoomInfo
+	roomInfo.Title = title
+	roomInfo.URL = realURL
+
 	if !status || id == "0" {
 		log.Println("Not on live or room not found")
-		return realURL, title
+		return roomInfo
 	}
 
 	url := fmt.Sprintf(roomURL, id)
 	data, err := httplib.Get(url).String()
 	if err != nil {
 		log.Println("http request error:", err)
-		return realURL, title
+		return roomInfo
 	}
 
 	// conver to json
 	res, err := simplejson.NewJson([]byte(data))
 	if err != nil {
 		log.Println("json convert error:", err)
-		return realURL, title
+		return roomInfo
 	}
 
 	arr, err := res.Get("data").Get("play_url").Get("durl").Array()
 	if err != nil {
 		log.Println("Not get Url:", err)
-		return realURL, title
+		return roomInfo
 	}
 	bestURLInfo, ok := arr[len(arr)-1].(map[string]interface{})
 	if !ok {
 		log.Println("Not get Url")
-		return realURL, title
+		return roomInfo
 	}
 	realURL = bestURLInfo["url"].(string)
 
 	log.Println(title, " ==> ", realURL)
+	roomInfo.URL = realURL
 
-	return realURL, title
+	return roomInfo
+}
+
+// GetBilibiliURL used for channel
+func GetBilibiliURL(rid string, ch chan<- RoomInfo, wg *sync.WaitGroup) {
+	start := time.Now()
+	defer wg.Done()
+	roomInfo := GetOneBilibiliURL(rid)
+	ch <- roomInfo
+	log.Printf("%.2fs %s\n", time.Since(start).Seconds(), roomInfo.Title)
 }

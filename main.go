@@ -1,22 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 
 	"./sites"
 )
 
-func main() {
-	start := time.Now()
-	var rooms []string
-	var roomInfos []sites.RoomInfo
-	rooms = []string{"364715", "21180272", "2656132"}
+const (
+	playList = "./playlist.m3u8"
+)
 
-	ch := make(chan sites.RoomInfo)
+func main() {
+	var roomInfos []sites.RoomInfo
 	var wg sync.WaitGroup
 
+	start := time.Now()
+	rooms := []string{"21753173", "888", "41515"}
+	ch := make(chan sites.RoomInfo)
+
+	// TODO: read cmd from Arg
+
+	// get all roominfos concurency
 	for _, room := range rooms {
 		wg.Add(1)
 		go sites.GetBilibiliURL(room, ch, &wg)
@@ -31,9 +40,25 @@ func main() {
 		roomInfos = append(roomInfos, room)
 	}
 
-	for i, info := range roomInfos {
-		log.Printf("%d ==> %s: %s\n", i+1, info.Title, info.URL)
-	}
-
 	log.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
+
+	// new or edit file and open
+	openPlayList(roomInfos)
+}
+
+func openPlayList(roomInfos []sites.RoomInfo) {
+	f, err := os.OpenFile(playList, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	defer f.Close()
+	if err != nil {
+		log.Println(err.Error())
+	} else {
+		for _, info := range roomInfos {
+			roomTitle := fmt.Sprintf("#EXTINF:-1,%s\n", info.Title)
+			_, err = f.Write([]byte(roomTitle))
+			roomURL := fmt.Sprintf("%s\n", info.URL)
+			_, err = f.Write([]byte(roomURL))
+		}
+		cmd := exec.Command("open", playList)
+		cmd.Start()
+	}
 }

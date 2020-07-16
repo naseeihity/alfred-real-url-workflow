@@ -84,12 +84,13 @@ func getRoomName(uid int) string {
 // GetOneBilibiliURL get real url of bilibili
 func GetOneBilibiliURL(rid string) RoomInfo {
 	const roomURL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=%s&play_url=1&mask=1&qn=0&platform=web"
-	var realURL = ""
+	var realURL string
 	status, id, title := getRid(rid)
 
-	var roomInfo RoomInfo
-	roomInfo.Title = title
-	roomInfo.URL = realURL
+	roomInfo := RoomInfo{
+		Title: title,
+		URL:   realURL,
+	}
 
 	if !status || id == "0" {
 		log.Println("Not on live or room not found")

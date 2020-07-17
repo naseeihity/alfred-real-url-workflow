@@ -28,7 +28,8 @@ func main() {
 	// get all roominfos concurency
 	for _, room := range rooms {
 		wg.Add(1)
-		go sites.GetBilibiliURL(room, ch, &wg)
+		roomID := sites.BiliID{RId: room}
+		go roomID.GetURL(ch, &wg)
 	}
 
 	go func() {
@@ -48,7 +49,7 @@ func main() {
 
 func openPlayList(roomInfos []sites.RoomInfo) {
 	f, err := os.OpenFile(playList, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	defer f.Close()
+
 	if err != nil {
 		log.Println(err.Error())
 	} else {
@@ -58,6 +59,16 @@ func openPlayList(roomInfos []sites.RoomInfo) {
 			roomURL := fmt.Sprintf("%s\n", info.URL)
 			_, err = f.Write([]byte(roomURL))
 		}
+
+		// should not use defer f.Close(), for some file system(NFS)
+		// will defer the close when meet write error
+		if closeErr := f.Close(); err == nil {
+			err = closeErr
+		}
+		if err != nil {
+			log.Println("file io error:", err)
+		}
+
 		cmd := exec.Command("open", playList)
 		cmd.Start()
 	}

@@ -17,6 +17,10 @@ type RoomInfo struct {
 	Title string
 }
 
+type BiliID struct {
+	RId string
+}
+
 // GetRid get real room id
 func getRid(rid string) (bool, string, string) {
 	const ridURL = "https://api.live.bilibili.com/room/v1/Room/room_init?id=%s"
@@ -129,11 +133,11 @@ func GetOneBilibiliURL(rid string) RoomInfo {
 	return roomInfo
 }
 
-// GetBilibiliURL used for channel
-func GetBilibiliURL(rid string, ch chan<- RoomInfo, wg *sync.WaitGroup) {
+// GetURL used for channel
+func (id BiliID) GetURL(ch chan<- RoomInfo, wg *sync.WaitGroup) {
 	start := time.Now()
 	defer wg.Done()
-	roomInfo := GetOneBilibiliURL(rid)
+	roomInfo := GetOneBilibiliURL(id.RId)
 	ch <- roomInfo
 	log.Printf("%.2fs %s\n", time.Since(start).Seconds(), roomInfo.Title)
 }

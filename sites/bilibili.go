@@ -1,6 +1,7 @@
 package sites
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -11,12 +12,7 @@ import (
 	"github.com/bitly/go-simplejson"
 )
 
-//RoomInfo url and title
-type RoomInfo struct {
-	URL   string
-	Title string
-}
-
+// BiliID for bilibili method
 type BiliID struct {
 	RId string
 }
@@ -86,7 +82,7 @@ func getRoomName(uid int) string {
 }
 
 // GetOneBilibiliURL get real url of bilibili
-func GetOneBilibiliURL(rid string) RoomInfo {
+func GetOneBilibiliURL(rid string) (RoomInfo, error) {
 	const roomURL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=%s&play_url=1&mask=1&qn=0&platform=web"
 	var realURL string
 	status, id, title := getRid(rid)
@@ -97,47 +93,47 @@ func GetOneBilibiliURL(rid string) RoomInfo {
 	}
 
 	if !status || id == "0" {
+		err := errors.New("Not on live or room not found")
 		log.Println("Not on live or room not found")
-		return roomInfo
+		return roomInfo, err
 	}
 
 	url := fmt.Sprintf(roomURL, id)
-	data, err := httplib.Get(url).String()
-	if err != nil {
-		log.Println("http request error:", err)
-		return roomInfo
-	}
 
 	// conver to json
-	res, err := simplejson.NewJson([]byte(data))
+	res, err := GetJSONRes(url)
 	if err != nil {
-		log.Println("json convert error:", err)
-		return roomInfo
+		log.Println("Bilibili => GetJSONRes Failed:", err)
+		return roomInfo, err
 	}
 
 	arr, err := res.Get("data").Get("play_url").Get("durl").Array()
 	if err != nil {
 		log.Println("Not get Url:", err)
-		return roomInfo
+		return roomInfo, err
 	}
 	bestURLInfo, ok := arr[len(arr)-1].(map[string]interface{})
 	if !ok {
+		err := errors.New("Not get Url")
 		log.Println("Not get Url")
-		return roomInfo
+		return roomInfo, err
 	}
 	realURL = bestURLInfo["url"].(string)
 
 	log.Println(title, " ==> ", realURL)
 	roomInfo.URL = realURL
 
-	return roomInfo
+	return roomInfo, nil
 }
 
 // GetURL used for channel
 func (id BiliID) GetURL(ch chan<- RoomInfo, wg *sync.WaitGroup) {
 	start := time.Now()
 	defer wg.Done()
-	roomInfo := GetOneBilibiliURL(id.RId)
+	roomInfo, err := GetOneBilibiliURL(id.RId)
+	if err != nil {
+		log.Printf("Get bilibili URL of rid-%s Failed:%s", id.RId, err)
+	}
 	ch <- roomInfo
 	log.Printf("%.2fs %s\n", time.Since(start).Seconds(), roomInfo.Title)
 }

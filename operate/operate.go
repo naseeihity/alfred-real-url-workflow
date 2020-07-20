@@ -9,18 +9,20 @@ import (
 	"log"
 	"os/exec"
 	"realurl/sites"
+	"strings"
 	"sync"
 )
 
 const (
-	ridJSON  = "roomlist.json"
-	playList = "playlist.m3u8"
+	ridJSON   = "roomlist.json"
+	playList  = "playlist.m3u8"
+	playListT = "_playlist.m3u8"
 )
 
 // getRoomsFromJSON get room rid from cahced json file
 // This function shows how to convert a json file into a golang map
 // as well as convert []interface{} to []string
-func getRoomsFromJSON() map[string][]string {
+func getRoomsFromJSON(p string) map[string][]string {
 	var rooms map[string][]interface{}
 	// should not int the map as a nil map which
 	// will cause assignment to entry in nil map panic when do roomMap[key] = value
@@ -35,6 +37,9 @@ func getRoomsFromJSON() map[string][]string {
 
 	// convert map interface to map string
 	for platform, roomInfo := range rooms {
+		if len(p) != 0 && p != platform {
+			continue
+		}
 		var roomRids []string
 		for _, info := range roomInfo {
 			roomRids = append(roomRids, info.(string))
@@ -64,12 +69,12 @@ func convertToM3U8(rooms map[string][]string) error {
 		roomInfos = append(roomInfos, room)
 	}
 
-	err := setM3U8File(roomInfos)
+	err := setM3U8File(roomInfos, false)
 
 	return err
 }
 
-func setM3U8File(roomInfos []sites.RoomInfo) error {
+func setM3U8File(roomInfos []sites.RoomInfo, temporary bool) error {
 	var buffer bytes.Buffer
 	for _, info := range roomInfos {
 		roomTitle := fmt.Sprintf("#EXTINF:-1,%s\n", info.Title)
@@ -79,6 +84,10 @@ func setM3U8File(roomInfos []sites.RoomInfo) error {
 	}
 	txt := buffer.String()
 
+	if temporary {
+		err := ioutil.WriteFile(playListT, []byte(txt), 0666)
+		return err
+	}
 	err := ioutil.WriteFile(playList, []byte(txt), 0666)
 	return err
 }
@@ -117,13 +126,16 @@ func getPlatRids(platform string, rids []string) []sites.Platform {
 		for _, id := range rids {
 			roomIds = append(roomIds, sites.ZhanqiID{RId: id})
 		}
+	default:
+		log.Printf("No such Platform")
 	}
+
 	return roomIds
 }
 
-// PlayFromJSON conver json to playlist and play
-func PlayFromJSON() error {
-	roomMap := getRoomsFromJSON()
+// playFromJSON conver json to playlist and play
+func playFromJSON(p string) error {
+	roomMap := getRoomsFromJSON(p)
 
 	if len(roomMap) == 0 {
 		err := errors.New("No valid room rid")
@@ -135,13 +147,76 @@ func PlayFromJSON() error {
 		return err
 	}
 
-	Play()
+	Play(playList)
 
 	return nil
 }
 
+// PlayAll all room in local json
+func PlayAll() {
+	playFromJSON("")
+}
+
+// PlayByPlatform filter rooms by platform
+func PlayByPlatform(p string) {
+	playFromJSON(p)
+}
+
+// PlayByID play one room
+func PlayByID(p string, rid string) {
+	rids := []string{rid}
+	roomIds := getPlatRids(p, rids)
+
+	for _, rid := range roomIds {
+		roomInfo, err := rid.GetOneURL()
+		if err != nil {
+			log.Println("Get room url by one id failed: ", err)
+		}
+		roomInfos := []sites.RoomInfo{roomInfo}
+		setM3U8File(roomInfos, true)
+		Play(playListT)
+	}
+}
+
+//AddNewRoom add new room to local json
+func AddNewRoom(p string, rids string) {
+	roomMap := getRoomsFromJSON("")
+	ridSlice := strings.Split(rids, ",")
+	var ridSet []string
+
+	// deduplication
+	for _, rid := range ridSlice {
+		rid := strings.TrimSpace(rid)
+		if _, ok := sites.Find(roomMap[p], rid); ok {
+			continue
+		}
+		ridSet = append(ridSet, rid)
+	}
+	if len(ridSet) == 0 {
+		log.Printf("Room id(s) already exist")
+		return
+	}
+
+	// update
+	roomMap[p] = append(roomMap[p], ridSet...)
+	data, err := json.MarshalIndent(roomMap, "", "    ")
+	if err != nil {
+		log.Fatal("add new room faild when covert map to json:", err)
+	} else {
+		err := ioutil.WriteFile(ridJSON, data, 0666)
+		if err != nil {
+			log.Fatal("add new room faild when write to json file:", err)
+			return
+		}
+		log.Printf("Add new room success!")
+	}
+}
+
 // Play from playList directly
-func Play() {
-	cmd := exec.Command("open", playList)
+func Play(f string) {
+	if len(f) == 0 {
+		f = playList
+	}
+	cmd := exec.Command("open", f)
 	cmd.Start()
 }

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"realurl/operate"
@@ -16,13 +16,28 @@ func main() {
 
 	switch argsLen {
 	case 0:
-		operate.PlayFromJSON()
+		operate.PlayAll()
 	case 1:
-		fmt.Printf("Play directly")
+		// ugly, maybe rewrite in the future
+		if strings.ToLower(args[0]) == "play" {
+			operate.Play("")
+		} else {
+			log.Println("Invalid Arg!")
+		}
 	case 2:
-		fmt.Printf("1. read from json 2.Play specific site rooms.")
+		if strings.ToLower(args[0]) == "play" {
+			operate.PlayByPlatform(args[1])
+		} else {
+			log.Println("Invalid Arg!")
+		}
 	case 3:
-		fmt.Printf("Add or Play")
+		if strings.ToLower(args[0]) == "play" {
+			operate.PlayByID(args[1], args[2])
+		} else if strings.ToLower(args[0]) == "add" {
+			operate.AddNewRoom(args[1], args[2])
+		} else {
+			log.Println("Invalid Arg!")
+		}
 	default:
 		log.Println("Not valid Arg number")
 	}

@@ -15,3 +15,5 @@
 # vendor/
 
 .vscode/
+
+*.m3u8

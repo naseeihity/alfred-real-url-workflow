@@ -42,9 +42,10 @@ func getRid(rid string) (bool, string, string) {
 		return status, id, title
 	}
 
-	title = getRoomName(uid)
-
 	status = statusNum != 0
+	if status {
+		title = getRoomName(uid)
+	}
 	id = strconv.Itoa(idNum)
 
 	log.Println("status:", status, " => id :", id)
@@ -81,24 +82,25 @@ func getRoomName(uid int) string {
 	return title
 }
 
-// GetOneBilibiliURL get real url of bilibili
-func GetOneBilibiliURL(rid string) (RoomInfo, error) {
-	const roomURL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=%s&play_url=1&mask=1&qn=0&platform=web"
+// GetOneURL get real url of bilibili
+func (id BiliID) GetOneURL() (RoomInfo, error) {
+	const roomURL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getRoomPlayInfo?room_id=%s&play_url=1&mask=1&qn=1&platform=web"
 	var realURL string
-	status, id, title := getRid(rid)
+	rid := string(id.RId)
+	status, rid, title := getRid(rid)
 
 	roomInfo := RoomInfo{
 		Title: title,
 		URL:   realURL,
 	}
 
-	if !status || id == "0" {
+	if !status || rid == "0" {
 		err := errors.New("Not on live or room not found")
 		log.Println("Not on live or room not found")
 		return roomInfo, err
 	}
 
-	url := fmt.Sprintf(roomURL, id)
+	url := fmt.Sprintf(roomURL, rid)
 
 	// conver to json
 	res, err := GetJSONRes(url)
@@ -130,7 +132,7 @@ func GetOneBilibiliURL(rid string) (RoomInfo, error) {
 func (id BiliID) GetURL(ch chan<- RoomInfo, wg *sync.WaitGroup) {
 	start := time.Now()
 	defer wg.Done()
-	roomInfo, err := GetOneBilibiliURL(id.RId)
+	roomInfo, err := id.GetOneURL()
 	if err != nil {
 		log.Printf("Get bilibili URL of rid-%s Failed:%s", id.RId, err)
 	}

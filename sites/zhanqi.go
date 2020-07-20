@@ -12,11 +12,11 @@ type ZhanqiID struct {
 	RId string
 }
 
-// GetOneZhanqiURL get real url of zhanqi
-func GetOneZhanqiURL(rid string) (RoomInfo, error) {
+// GetOneURL get real url of zhanqi
+func (id ZhanqiID) GetOneURL() (RoomInfo, error) {
 	const roomJSON = "https://m.zhanqi.tv/api/static/v2.1/room/domain/%s.json"
 	const roomURL = "https://dlhdl-cdn.zhanqi.tv/zqlive/%s.flv"
-
+	rid := string(id.RId)
 	title := "zhanqi_" + rid
 	roomInfo := RoomInfo{
 		Title: title,
@@ -46,7 +46,7 @@ func GetOneZhanqiURL(rid string) (RoomInfo, error) {
 func (id ZhanqiID) GetURL(ch chan<- RoomInfo, wg *sync.WaitGroup) {
 	start := time.Now()
 	defer wg.Done()
-	roomInfo, err := GetOneZhanqiURL(id.RId)
+	roomInfo, err := id.GetOneURL()
 	if err != nil {
 		log.Fatalf("Get zhanqi URL of rid-%s Failed:%s", id.RId, err)
 	}

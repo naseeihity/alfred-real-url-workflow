@@ -44,7 +44,7 @@ func getRid(rid string) (bool, string, string) {
 
 	status = statusNum != 0
 	if status {
-		title = getRoomName(uid)
+		title = getBiliRoomName(uid)
 	}
 	id = strconv.Itoa(idNum)
 
@@ -53,8 +53,8 @@ func getRid(rid string) (bool, string, string) {
 	return status, id, title
 }
 
-// GetRoomName get name of room
-func getRoomName(uid int) string {
+// getBiliRoomName get name of room
+func getBiliRoomName(uid int) string {
 	const homeURL = "http://api.bilibili.com/x/space/acc/info?mid=%s"
 	var id = strconv.Itoa(uid)
 	var title = "bilibi_" + id

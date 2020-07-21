@@ -2,6 +2,7 @@ package sites
 
 import (
 	"log"
+	"net/http"
 	"sync"
 
 	"github.com/astaxie/beego/httplib"
@@ -36,6 +37,19 @@ func GetJSONRes(url string) (*simplejson.Json, error) {
 	}
 
 	return res, nil
+}
+
+// GetWithHead a content-type head
+func GetWithHead(url string) (*http.Response, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+
+	return resp, err
 }
 
 // Find takes a slice and looks for an element in it. If found it will

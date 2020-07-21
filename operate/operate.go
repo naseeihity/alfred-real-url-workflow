@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"realurl/sites"
 	"strings"
 	"sync"
@@ -29,7 +32,7 @@ func getRoomsFromJSON(p string) map[string][]string {
 	roomMap := make(map[string][]string)
 
 	// read from json file and unmarshal
-	f, err := ioutil.ReadFile(ridJSON)
+	f, err := ioutil.ReadFile(getPath(ridJSON))
 	if err != nil {
 		log.Fatal("open file err:", err)
 	}
@@ -85,10 +88,10 @@ func setM3U8File(roomInfos []sites.RoomInfo, temporary bool) error {
 	txt := buffer.String()
 
 	if temporary {
-		err := ioutil.WriteFile(playListT, []byte(txt), 0666)
+		err := ioutil.WriteFile(getPath(playListT), []byte(txt), 0666)
 		return err
 	}
-	err := ioutil.WriteFile(playList, []byte(txt), 0666)
+	err := ioutil.WriteFile(getPath(playList), []byte(txt), 0666)
 	return err
 }
 
@@ -117,7 +120,11 @@ func getRoomInfoByPlatform(platform string, rids []string, ch chan<- sites.RoomI
 func getPlatRids(platform string, rids []string) []sites.Platform {
 	var roomIds []sites.Platform
 	// ugly, maybe rewrite in the future
-	switch platform {
+	switch strings.ToLower(platform) {
+	case "douyu":
+		for _, id := range rids {
+			roomIds = append(roomIds, sites.DouyuID{RId: id})
+		}
 	case "bilibili":
 		for _, id := range rids {
 			roomIds = append(roomIds, sites.BiliID{RId: id})
@@ -203,7 +210,7 @@ func AddNewRoom(p string, rids string) {
 	if err != nil {
 		log.Fatal("add new room faild when covert map to json:", err)
 	} else {
-		err := ioutil.WriteFile(ridJSON, data, 0666)
+		err := ioutil.WriteFile(getPath(ridJSON), data, 0666)
 		if err != nil {
 			log.Fatal("add new room faild when write to json file:", err)
 			return
@@ -217,6 +224,15 @@ func Play(f string) {
 	if len(f) == 0 {
 		f = playList
 	}
-	cmd := exec.Command("open", f)
+	cmd := exec.Command("open", getPath(f))
 	cmd.Start()
+}
+
+func getPath(p string) string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return path.Join(dir, p)
 }

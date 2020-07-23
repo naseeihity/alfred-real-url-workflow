@@ -45,6 +45,7 @@ func getDouyuRoomName(rid string) (string, error) {
 }
 
 // GetOneURL get real url of zhanqi
+// TODO: Another method, this may miss some rooms
 func (id DouyuID) GetOneURL() (RoomInfo, error) {
 	const roomURL = "https://www.douyu.com/%s"
 	const URL = "http://tx2play1.douyucdn.cn/live/%s.flv?uuid="
@@ -68,7 +69,6 @@ func (id DouyuID) GetOneURL() (RoomInfo, error) {
 			log.Fatal(err)
 		}
 		bodyString := string(bodyBytes)
-		// log.Println(bodyString)
 
 		regStr := `live/([\d\w]*?)_`
 		re := regexp.MustCompile(regStr)

@@ -114,6 +114,10 @@ func (id BiliID) GetOneURL() (RoomInfo, error) {
 		log.Println("Not get Url:", err)
 		return roomInfo, err
 	}
+	if len(arr) == 0 {
+		err := errors.New("The room is not on live")
+		return roomInfo, err
+	}
 	bestURLInfo, ok := arr[len(arr)-1].(map[string]interface{})
 	if !ok {
 		err := errors.New("Not get Url")

@@ -133,6 +133,10 @@ func getPlatRids(platform string, rids []string) []sites.Platform {
 		for _, id := range rids {
 			roomIds = append(roomIds, sites.ZhanqiID{RId: id})
 		}
+	case "youku":
+		for _, id := range rids {
+			roomIds = append(roomIds, sites.YoukuID{RId: id})
+		}
 	default:
 		log.Printf("No such Platform")
 	}

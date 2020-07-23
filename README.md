@@ -35,7 +35,8 @@ play
 ## Support Platforms
 - [x] bilibili
 - [x] zhanqi
-- [ ] douyu
+- [x] douyu
+- [x] youku
 - [ ] huya
 
 ## Reference

@@ -6,12 +6,14 @@ This workflow is using to watch live stream of chinese live broadcast platform s
 This is also a project to learn Golang.
 
 <p align="center">
+  <img src="static/alfred.png" />
   <img src="static/show.png" />
 </p>
 
 ## Usage
 ### run from Command Line
 No need to install any modules(thanks for golang)
+
 ```
 // open and update url
 // just run the code directly

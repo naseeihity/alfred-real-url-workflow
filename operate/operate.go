@@ -31,8 +31,17 @@ func getRoomsFromJSON(p string) map[string][]string {
 	// will cause assignment to entry in nil map panic when do roomMap[key] = value
 	roomMap := make(map[string][]string)
 
+	// create roomlist.json if not exist
+	path := getPath(ridJSON)
+	if !isExist(path) {
+		_, err := os.Create(path)
+		if err != nil {
+			log.Fatal("Create roomlist.json failed:", err)
+		}
+		return roomMap
+	}
 	// read from json file and unmarshal
-	f, err := ioutil.ReadFile(getPath(ridJSON))
+	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal("open file err:", err)
 	}
@@ -243,4 +252,15 @@ func getPath(p string) string {
 	}
 
 	return path.Join(dir, p)
+}
+
+func isExist(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+	return true
 }

@@ -102,7 +102,7 @@ func (id YoukuID) GetURL(ch chan<- RoomInfo, wg *sync.WaitGroup) {
 	defer wg.Done()
 	roomInfo, err := id.GetOneURL()
 	if err != nil {
-		log.Println("Get youku URL of rid-%s Failed:%s", id.RId, err)
+		log.Printf("Get youku URL of rid-%s Failed:%s", id.RId, err)
 	}
 	ch <- roomInfo
 	log.Printf("%.2fs %s\n", time.Since(start).Seconds(), roomInfo.Title)

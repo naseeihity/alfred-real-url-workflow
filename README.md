@@ -6,28 +6,29 @@ This workflow is using to watch live stream of chinese live broadcast platform s
 This is also a project to learn Golang.
 
 <p align="center">
-  <img src="static/show.png">
+  <img src="static/show.png" />
 </p>
+
 ## Usage
 ### run from Command Line
 No need to install any modules(thanks for golang)
 ```
-# open and update url
-# just run the code directly
+// open and update url
+// just run the code directly
 
-# open by room id
+// open by room id
 $ ./main play {platform} {room_id}
 
 Example:
 $ ./main play douyu 9999
 
-# open room from local list, if not set platform, then will open all rooms
+// open room from local list, if not set platform, then will open all rooms
 $ ./main play {platform}
 
-# add room to local list
+// add room to local list
 $ ./main add {platform} {room_id}
 
-# open directly without update url
+// open directly without update url
 $ ./main play
 ```
 

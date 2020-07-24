@@ -46,13 +46,18 @@ func GetJSONRes(url string) (*simplejson.Json, error) {
 }
 
 // GetWithHead a content-type head
-func GetWithHead(url string) (*http.Response, error) {
+func GetWithHead(url string, header map[string]string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	if header != nil {
+		for k, v := range header {
+			req.Header.Add(k, v)
+		}
+	}
 	resp, err := client.Do(req)
 
 	return resp, err

@@ -57,7 +57,7 @@ func (id DouyuID) GetOneURL() (RoomInfo, error) {
 	}
 
 	url := fmt.Sprintf(roomURL, rid)
-	resp, err := GetWithHead(url)
+	resp, err := GetWithHead(url, nil)
 	if err != nil {
 		log.Fatal("Get douyu url failed:", err)
 	}
@@ -72,9 +72,10 @@ func (id DouyuID) GetOneURL() (RoomInfo, error) {
 
 		regStr := `live/([\d\w]*?)_`
 		re := regexp.MustCompile(regStr)
-		partArr := re.FindAll([]byte(bodyString), -1)
+		// 注意这里如果要匹配正则表达式括号里的值需要用submatch
+		partArr := re.FindAllSubmatch([]byte(bodyString), -1)
 		if len(partArr) != 0 {
-			part := partArr[0]
+			part := partArr[0][1]
 			liveURL := fmt.Sprintf(URL, string(part))
 			roomInfo.URL = liveURL
 		}

@@ -70,7 +70,7 @@ func (id DouyuID) GetOneURL() (RoomInfo, error) {
 		}
 		bodyString := string(bodyBytes)
 
-		regStr := `dyliveflv1a/([\d\w]*?)_`
+		regStr := `dyliveflv1a*/([\d\w]*?)_`
 		re := regexp.MustCompile(regStr)
 		// 注意这里如果要匹配正则表达式括号里的值需要用submatch
 		partArr := re.FindAllSubmatch([]byte(bodyString), -1)

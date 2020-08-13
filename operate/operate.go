@@ -65,7 +65,7 @@ func getRoomsFromJSON(p string) map[string][]string {
 func convertToM3U8(rooms map[string][]string) error {
 	var roomInfos []sites.RoomInfo
 	var wg sync.WaitGroup
-	ch := make(chan sites.RoomInfo)
+	ch := make(chan sites.RoomInfo, len(rooms))
 
 	for platform, rids := range rooms {
 		wg.Add(1)
@@ -106,7 +106,7 @@ func setM3U8File(roomInfos []sites.RoomInfo, temporary bool) error {
 
 func getRoomInfoByPlatform(platform string, rids []string, ch chan<- sites.RoomInfo, wg *sync.WaitGroup) {
 	var wg2 sync.WaitGroup
-	ch2 := make(chan sites.RoomInfo)
+	ch2 := make(chan sites.RoomInfo, len(rids))
 	defer wg.Done()
 
 	roomIds := getPlatRids(platform, rids)
